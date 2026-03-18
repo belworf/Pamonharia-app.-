@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1B5E20">
+    <title>Pamonharia DJ - Controle e Metas</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="logo.png" onerror="this.style.display='none'">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --verde-escuro: #1B5E20; --verde-medio: #2E7D32; --verde-claro: #4CAF50; --amarelo: #F9A825; --vermelho: #D32F2F; --cinza-claro: #F5F5F5; --cinza-medio: #E0E0E0; --cinza-escuro: #757575; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: linear-gradient(135deg, var(--verde-escuro) 0%, var(--verde-medio) 100%); min-height: 100vh; color: #333; }
+        
+        .login-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-box { background: white; border-radius: 20px; padding: 40px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 450px; width: 100%; animation: fadeInUp 0.5s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .logo-container { text-align: center; margin-bottom: 30px; }
+        .logo-container img { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 4px solid var(--verde-escuro); margin-bottom: 10px; }
+        .logo-container h1 { color: var(--verde-escuro); font-size: 24px; margin-bottom: 5px; }
+        .login-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--cinza-medio); }
+        .login-tab { flex: 1; padding: 12px; background: none; border: none; font-size: 16px; font-weight: 600; color: var(--cinza-escuro); cursor: pointer; border-bottom: 3px solid transparent; }
+        .login-tab.active { color: var(--verde-escuro); border-bottom-color: var(--amarelo); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--verde-escuro); font-size: 14px; }
+        .form-group input, .form-group select, .input-group textarea { width: 100%; padding: 14px; border: 2px solid var(--cinza-medio); border-radius: 10px; font-size: 16px; font-family: inherit; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; }
+        .btn-primary { background: linear-gradient(135deg, var(--verde-escuro), var(--verde-medio)); }
+        .btn-success { background: linear-gradient(135deg, var(--verde-claro), var(--verde-medio)); }
+        .btn-warning { background: linear-gradient(135deg, #F57F17, var(--amarelo)); }
+        .btn-danger { background: linear-gradient(135deg, #C62828, var(--vermelho)); }
+        .btn-secondary { background: var(--cinza-medio); color: var(--cinza-escuro); }
+        .btn-small { padding: 8px 12px; font-size: 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; color: white; }
+        .btn:disabled, .btn-small:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .funcionario-grid { display: grid; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .funcionario-card { background: var(--verde-claro); color: white; padding: 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .funcionario-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--amarelo); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        
+        .app-container { display: none; background: var(--cinza-claro); min-height: 100vh; padding-bottom: 80px; }
+        .app-container.active { display: block; }
+        .app-header { background: var(--verde-escuro); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        
+        .app-content { padding: 15px; max-width: 1000px; margin: 0 auto; }
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--cinza-medio); padding-bottom: 10px; }
+        .card-header h3 { color: var(--verde-escuro); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--verde-medio); color: white; padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-card.yellow { background: var(--amarelo); }
+        .stat-value { font-size: 24px; font-weight: 700; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: var(--verde-escuro); }
+        
+        /* TAREFAS INDIVIDUAIS (Com PAUSE e OBS) */
+        .participant-row { background: var(--cinza-claro); border: 2px solid var(--cinza-medio); padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+        .participant-row.finished { border-color: var(--verde-claro); background: rgba(76, 175, 80, 0.05); }
+        .part-inputs { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .part-inputs select, .part-inputs input { width: 100%; padding: 10px; border: 2px solid var(--cinza-medio); border-radius: 6px; font-size: 14px; }
+        .part-obs-box input { width: 100%; padding: 10px; border: 2px solid var(--cinza-medio); border-radius: 6px; font-size: 14px; margin-bottom: 8px;}
+        .part-controls { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--cinza-medio); padding-top: 10px; }
+        .part-timer { font-size: 22px; font-weight: 700; font-family: monospace; color: var(--verde-escuro); }
+        .part-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;}
+        @media (max-width: 600px) { .part-inputs { grid-template-columns: 1fr; } .part-controls { flex-direction: column; gap: 10px; } .part-actions{ justify-content: center; } }
+
+        .tasks-list { display: grid; gap: 12px; }
+        .task-item { background: white; border-radius: 10px; padding: 15px; border-left: 5px solid var(--verde-medio); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .task-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: var(--verde-escuro); }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px; color: var(--cinza-escuro); text-decoration: none; font-size: 11px; font-weight: 600; }
+        .nav-item.active { color: var(--verde-escuro); }
+        .nav-icon { font-size: 22px; }
+        
+        .hidden { display: none !important; }
+        
+        /* ESTILOS DO RELATÓRIO E METAS */
+        .bonus-green { background: rgba(76, 175, 80, 0.1); border-left: 5px solid #4CAF50; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .bonus-yellow { background: rgba(255, 152, 0, 0.1); border-left: 5px solid #FF9800; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .bonus-red { background: rgba(244, 67, 54, 0.1); border-left: 5px solid #F44336; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .relatorio-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .relatorio-table th, .relatorio-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--cinza-medio); }
+        .relatorio-table th { background: var(--cinza-claro); }
+
+        /* MODO DE IMPRESSÃO (PDF) */
+        @media print {
+            body { background: white !important; }
+            .bottom-nav, .app-header, .no-print { display: none !important; }
+            .app-container { padding: 0 !important; }
+            .card { box-shadow: none !important; border: 1px solid #ccc; margin: 0 0 20px 0; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="logo-container">
+                <img src="logo.png" alt="Pamonharia DJ" onerror="this.style.display='none'">
+                <h1>🌽 Pamonharia DJ</h1>
+                <p>Controle de Produção</p>
+            </div>
+            <div class="login-tabs">
+                <button class="login-tab active" type="button" onclick="switchLoginTab('admin')">👔 Admin/Enc</button>
+                <button class="login-tab" type="button" onclick="switchLoginTab('funcionario')">👷 Funcionário</button>
+            </div>
+            <div id="adminTab" class="tab-content active">
+                <div class="form-group"><label>👤 Usuário</label><input type="text" id="adminUsername"></div>
+                <div class="form-group"><label>🔒 Senha</label><input type="password" id="adminPassword"></div>
+                <button class="btn btn-primary" onclick="loginAdmin(event)">🚀 Entrar</button>
+            </div>
+            <div id="funcionarioTab" class="tab-content">
+                <div class="funcionario-grid" id="funcionarioList"><p style="text-align:center;">Carregando...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Principal -->
+    <div id="appContainer" class="app-container">
+        <header class="app-header">
+            <div class="header-top">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div><h2 id="userName" style="font-size:16px;">Nome</h2><p id="userRole" style="font-size:12px;">Cargo</p></div>
+                </div>
+                <button class="btn-logout" onclick="logout()" style="border:none; background:rgba(255,255,255,0.2); padding:5px 10px; border-radius:5px; color:white;">Sair</button>
+            </div>
+        </header>
+
+        <main class="app-content">
+            <!-- Dashboard -->
+            <div id="dashboardPage" class="page-content">
+                <div class="stats-grid">
+                    <div class="stat-card"><div>🌽 Ajuntados</div><div class="stat-value" id="statCaixas">0</div></div>
+                    <div class="stat-card yellow"><div>✂️ Cortados</div><div class="stat-value" id="statPaletes">0</div></div>
+                </div>
+                <div class="card"><div class="card-header"><h3>📋 Hoje</h3></div><div id="recentTasks" class="tasks-list"></div></div>
+            </div>
+
+            <!-- Nova Tarefa -->
+            <div id="tarefaPage" class="page-content hidden">
+                <div class="card no-print">
+                    <div class="card-header" style="flex-wrap: wrap; gap:10px;">
+                        <h3>➕ Nova Tarefa (Lote)</h3>
+                        <div style="display: flex; gap:5px;">
+                            <button type="button" class="btn-small btn-primary" onclick="addAllParticipants()">➕ Add Todos</button>
+                            <button type="button" class="btn-small btn-success" onclick="addParticipantRow()">➕ Add 1</button>
+                        </div>
+                    </div>
+                    <form id="taskForm">
+                        <div id="participantsContainer"></div>
+                        <div class="input-group" style="margin-top: 15px;">
+                            <label>📝 Observação Geral (Equipe)</label>
+                            <textarea id="taskObs" rows="2" placeholder="Opcional..."></textarea>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+                            <button type="button" class="btn btn-primary" onclick="salvarTodasAsTarefas()">💾 Salvar Nuvem</button>
+                            <button type="button" class="btn btn-danger" onclick="cancelarTarefas()">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Histórico -->
+            <div id="historicoPage" class="page-content hidden">
+                <div class="card no-print">
+                    <div class="card-header"><h3>📜 Histórico</h3></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <div class="input-group"><label>👷 Func</label><select id="filterFuncionario" onchange="applyFilters()"></select></div>
+                        <div class="input-group"><label>📅 Data</label><input type="date" id="filterDate" onchange="applyFilters()"></div>
+                    </div>
+                    <div id="historicoList" class="tasks-list"></div>
+                </div>
+            </div>
+
+            <!-- Relatório e Bônus -->
+            <div id="relatorioPage" class="page-content hidden">
+                <div class="card no-print">
+                    <div class="card-header"><h3>🏆 Metas e Relatórios</h3></div>
+                    <div style="display:grid; gap:10px; margin-bottom:15px;">
+                        <div class="input-group" id="relFuncBox"><label>👷 Selecionar Funcionário</label><select id="relFuncSelect"></select></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <div class="input-group"><label>📅 Data Início</label><input type="date" id="relStart"></div>
+                            <div class="input-group"><label>📅 Data Fim</label><input type="date" id="relEnd"></div>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-small btn-primary" style="flex:1; padding:12px;" onclick="gerarRelatorio()">🔍 Gerar</button>
+                            <button class="btn-small btn-secondary" style="flex:1; padding:12px;" onclick="window.print()">🖨️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Área que será Impressa -->
+                <div class="card hidden" id="printArea">
+                    <h3 style="text-align:center; color:var(--verde-escuro); border-bottom:2px solid #ccc; padding-bottom:10px; margin-bottom:15px;">Fechamento de Metas</h3>
+                    <p><strong>Funcionário:</strong> <span id="resNome"></span></p>
+                    <p><strong>Período:</strong> <span id="resPeriodo"></span></p>
+                    <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
+                    
+                    <h4>Cálculo de Bônus (Mês)</h4>
+                    <div id="resAjuntar" class="bonus-red">🌽 Ajuntar: Sem dados</div>
+                    <div id="resCortar" class="bonus-red">✂️ Cortar: Sem dados</div>
+                    
+                    <div style="background:var(--verde-escuro); color:white; padding:15px; border-radius:8px; margin-top:15px; text-align:center;">
+                        <h2 style="margin:0;">BÔNUS TOTAL: <span id="resBonus">R$ 0,00</span></h2>
+                    </div>
+
+                    <h4 style="margin-top:20px; margin-bottom:10px;">Resumo de Paletes</h4>
+                    <table class="relatorio-table">
+                        <tr><th>Ação</th><th>Paletes</th><th>Tarefas</th><th>Média/Tempo</th></tr>
+                        <tr><td>🌽 Ajuntar</td><td id="resQtdAjuntar">0</td><td id="resTfAjuntar">0</td><td id="resTmpAjuntar">0m</td></tr>
+                        <tr><td>✂️ Cortar</td><td id="resQtdCortar">0</td><td id="resTfCortar">0</td><td id="resTmpCortar">0m</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cadastro -->
+            <div id="cadastroPage" class="page-content hidden no-print">
+                <div class="card">
+                    <div class="card-header"><h3>👥 Cadastrar Funcionário</h3></div>
+                    <div class="input-group"><label>👤 Nome</label><input type="text" id="cadNome"></div>
+                    <div class="input-group"><label>💼 Cargo</label><select id="cadCargo" onchange="toggleCreds()"><option value="funcionario">👷 Funcionário</option><option value="encarregado">👔 Encarregado</option></select></div>
+                    <div id="credentialsGroup" class="hidden">
+                        <div class="input-group"><label>👤 Usuário (Login)</label><input type="text" id="cadUsuario"></div>
+                        <div class="input-group"><label>🔒 Senha</label><input type="password" id="cadSenha"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="cadastrarFuncionario()">✅ Salvar na Nuvem</button>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header"><h3>📋 Equipe Cadastrada</h3></div>
+                    <div id="funcionariosCadastrados" class="tasks-list"></div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" onclick="navigateTo('dashboard', event)"><span class="nav-icon">📊</span><span class="nav-label">Início</span></a>
+            <a href="#" class="nav-item" id="navTarefa" onclick="navigateTo('tarefa', event)"><span class="nav-icon">⏱️</span><span class="nav-label">Tarefas</span></a>
+            <a href="#" class="nav-item" onclick="navigateTo('historico', event)"><span class="nav-icon">📜</span><span class="nav-label">Histórico</span></a>
+            <a href="#" class="nav-item" onclick="navigateTo('relatorio', event)"><span class="nav-icon">🏆</span><span class="nav-label">Metas/PDF</span></a>
+            <a href="#" class="nav-item" id="navCadastro" onclick="navigateTo('cadastro', event)"><span class="nav-icon">👥</span><span class="nav-label">Cadastro</span></a>
+        </nav>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHamzIpsV1csQbAntGd3iJsB1zJPHET3Q",
+            authDomain: "pamonharia-dj.firebaseapp.com",
+            projectId: "pamonharia-dj",
+            storageBucket: "pamonharia-dj.firebasestorage.app",
+            messagingSenderId: "271549745009",
+            appId: "1:271549745009:web:dc603689e66bcaee4198d0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        db.enablePersistence().catch(err => console.log(err));
+
+        let globalUsers = []; let globalTasks =[]; let currentUser = null; let rowData = {};
+
+        function initApp() {
+            db.collection("users").onSnapshot(snapshot => {
+                globalUsers =[]; snapshot.forEach(doc => globalUsers.push({ id: doc.id, ...doc.data() }));
+                if (globalUsers.length === 0) db.collection("users").add({ nome: 'Admin', usuario: 'admin', senha: '123', cargo: 'admin', avatar: '👨‍💼' });
+                else loadFuncionariosList();
+            });
+            db.collection("tasks").onSnapshot(snapshot => {
+                globalTasks =[]; snapshot.forEach(doc => globalTasks.push({ id: doc.id, ...doc.data() }));
+                if (currentUser) { if(!document.getElementById('dashboardPage').classList.contains('hidden')) loadDashboard(); }
+            });
+            const saved = localStorage.getItem('pam_user'); if (saved) { currentUser = JSON.parse(saved); showApp(); }
+        }
+
+        function switchLoginTab(t) {
+            document.querySelectorAll('.login-tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+            document.querySelectorAll('.login-tab')[t==='admin'?0:1].classList.add('active'); document.getElementById(t+'Tab').classList.add('active');
+        }
+
+        function loadFuncionariosList() {
+            const list = document.getElementById('funcionarioList'); list.innerHTML = '';
+            globalUsers.filter(u => u.cargo === 'funcionario').forEach(f => {
+                list.innerHTML += `<div class="funcionario-card" onclick="loginFuncionario('${f.id}')"><div class="funcionario-avatar">${f.avatar}</div><div><h3>${f.nome}</h3><p>Funcionário</p></div></div>`;
+            });
+        }
+
+        function loginAdmin(e) {
+            e.preventDefault();
+            const user = globalUsers.find(u => u.usuario === document.getElementById('adminUsername').value && u.senha === document.getElementById('adminPassword').value && u.cargo !== 'funcionario');
+            if (user) { currentUser = user; localStorage.setItem('pam_user', JSON.stringify(user)); showApp(); } else alert('❌ Usuário/Senha incorretos');
+        }
+        function loginFuncionario(id) { currentUser = globalUsers.find(u => u.id === id); localStorage.setItem('pam_user', JSON.stringify(currentUser)); showApp(); }
+        function logout() { localStorage.removeItem('pam_user'); window.location.reload(); }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContainer').classList.add('active');
+            document.getElementById('userAvatar').textContent = currentUser.avatar; document.getElementById('userName').textContent = currentUser.nome;
+            document.getElementById('userRole').textContent = currentUser.cargo.toUpperCase();
+            
+            const isAdminEnc = (currentUser.cargo === 'admin' || currentUser.cargo === 'encarregado');
+            document.getElementById('navCadastro').style.display = isAdminEnc ? 'flex' : 'none';
+            document.getElementById('navTarefa').style.display = isAdminEnc ? 'flex' : 'none';
+            document.getElementById('relFuncBox').style.display = isAdminEnc ? 'block' : 'none';
+            
+            navigateTo(isAdminEnc ? 'dashboard' : 'historico');
+        }
+
+        function navigateTo(page, ev) {
+            if(ev) ev.preventDefault();
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden')); document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(page+'Page').classList.remove('hidden');
+            if(ev) ev.target.closest('.nav-item').classList.add('active');
+            if(page==='dashboard') loadDashboard(); else if(page==='historico') loadHistorico(); else if(page==='relatorio') loadRelatorioConfig();
+            else if(page==='cadastro') loadFuncionariosCadastrados();
+        }
+
+        // ================= TAREFAS =================
+        function addAllParticipants() {
+            const tipo = prompt("Qual a ação para todos? (Digite 'ajuntar' ou 'cortar')");
+            if(tipo !== 'ajuntar' && tipo !== 'cortar') return alert("Ação inválida! Escreva 'ajuntar' ou 'cortar'.");
+            
+            const ocupados = Array.from(document.querySelectorAll('.part-func')).map(s => s.value);
+            const livres = globalUsers.filter(u => u.cargo === 'funcionario' && !ocupados.includes(u.id));
+            if(livres.length === 0) return alert("Todos já estão na lista!");
+            livres.forEach(u => addParticipantRow(u.id, tipo));
+        }
+
+        function addParticipantRow(preId = null, preTipo = null) {
+            const container = document.getElementById('participantsContainer');
+            const rowId = 'row_' + Date.now() + Math.random().toString(36).substr(2, 5);
+            rowData[rowId] = { status: 'IDLE', accumulated: 0, start: null, interval: null };
+
+            const ocupados = Array.from(document.querySelectorAll('.part-func')).map(s => s.value);
+            let opts = '<option value="">Pessoa...</option>';
+            globalUsers.filter(u => u.cargo === 'funcionario').forEach(f => {
+                if(!ocupados.includes(f.id) || f.id == preId) opts += `<option value="${f.id}">${f.nome}</option>`;
+            });
+
+            const row = document.createElement('div'); row.className = 'participant-row'; row.id = rowId;
+            row.innerHTML = `
+                <div class="part-inputs">
+                    <select class="part-func" required>${opts}</select>
+                    <select class="part-tipo" required><option value="">Ação...</option><option value="ajuntar">🌽 Ajuntar</option><option value="cortar">✂️ Cortar</option></select>
+                    <input type="number" class="part-qtd" min="1" placeholder="Paletes" required>
+                </div>
+                <div class="part-obs-box"><input type="text" class="part-obs" placeholder="Observação só para ele (Opcional)"></div>
+                <div class="part-controls">
+                    <div class="part-timer" id="timer_${rowId}">00:00:00</div>
+                    <div class="part-actions">
+                        <button type="button" class="btn-small btn-success btn-st" onclick="startTimerRow('${rowId}')">▶️ Play</button>
+                        <button type="button" class="btn-small btn-warning btn-pa hidden" onclick="pauseTimerRow('${rowId}')">⏸️ Pausa</button>
+                        <button type="button" class="btn-small btn-secondary btn-sp hidden" onclick="stopTimerRow('${rowId}')">✅ Fim</button>
+                        <button type="button" class="btn-small btn-danger" onclick="removeRow('${rowId}')">🗑️</button>
+                    </div>
+                </div>`;
+            container.appendChild(row);
+            if(preId) row.querySelector('.part-func').value = preId;
+            if(preTipo) row.querySelector('.part-tipo').value = preTipo;
+        }
+
+        function removeRow(id) { if(rowData[id].interval) clearInterval(rowData[id].interval); delete rowData[id]; document.getElementById(id).remove(); }
+
+        function startTimerRow(id) {
+            let d = rowData[id]; const row = document.getElementById(id);
+            if(d.status === 'IDLE' || d.status === 'PAUSED') {
+                if(!row.querySelector('.part-func').value || !row.querySelector('.part-tipo').value) return alert("Selecione a pessoa e ação!");
+                row.querySelector('.part-func').disabled = true; row.querySelector('.part-tipo').disabled = true;
+                
+                d.start = new Date(Date.now() - (d.accumulated * 1000)); d.status = 'RUNNING';
+                row.querySelector('.btn-st').classList.add('hidden');
+                row.querySelector('.btn-pa').classList.remove('hidden');
+                row.querySelector('.btn-sp').classList.remove('hidden');
+                
+                d.interval = setInterval(() => {
+                    const sec = Math.floor((Date.now() - d.start) / 1000);
+                    document.getElementById(`timer_${id}`).textContent = `${String(Math.floor(sec/3600)).padStart(2,'0')}:${String(Math.floor((sec%3600)/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+                }, 1000);
+            }
+        }
+
+        function pauseTimerRow(id) {
+            let d = rowData[id]; const row = document.getElementById(id);
+            if(d.status === 'RUNNING') {
+                clearInterval(d.interval); d.accumulated = Math.floor((Date.now() - d.start) / 1000); d.status = 'PAUSED';
+                row.querySelector('.btn-pa').classList.add('hidden');
+                let st = row.querySelector('.btn-st'); st.classList.remove('hidden'); st.textContent = '▶️ Retomar';
+            }
+        }
+
+        function stopTimerRow(id) {
+            let d = rowData[id]; const row = document.getElementById(id);
+            let qtd = row.querySelector('.part-qtd').value;
+            if(!qtd || qtd <= 0) return alert("Informe a quantidade de paletes!");
+            if(d.status === 'RUNNING') { clearInterval(d.interval); d.accumulated = Math.floor((Date.now() - d.start) / 1000); }
+            d.status = 'FINISHED';
+            row.querySelector('.btn-pa').classList.add('hidden'); row.querySelector('.btn-st').classList.add('hidden');
+            let sp = row.querySelector('.btn-sp'); sp.textContent = '✅ Salvo'; sp.disabled = true;
+            row.querySelector('.part-qtd').disabled = true; row.querySelector('.part-obs').disabled = true;
+            row.classList.add('finished');
+        }
+
+        function salvarTodasAsTarefas() {
+            const rows = document.querySelectorAll('.participant-row'); if(rows.length===0) return alert('Lista vazia!');
+            let tks =[]; let pend = false; const obsG = document.getElementById('taskObs').value;
+            rows.forEach(r => {
+                if(rowData[r.id].status !== 'FINISHED') pend = true;
+                const func = globalUsers.find(u => u.id == r.querySelector('.part-func').value);
+                tks.push({
+                    funcionarioId: func.id, funcionarioNome: func.nome, tipo: r.querySelector('.part-tipo').value,
+                    paletes: parseInt(r.querySelector('.part-qtd').value), observacaoLote: obsG, observacao: r.querySelector('.part-obs').value,
+                    inicio: new Date(Date.now() - (rowData[r.id].accumulated*1000)).toISOString(), fim: new Date().toISOString(), duracao: rowData[r.id].accumulated, status: 'completed'
+                });
+            });
+            if(pend) return alert("Termine (✅ Fim) de todos os cronômetros antes de salvar!");
+            tks.forEach(t => db.collection("tasks").add(t));
+            document.getElementById('participantsContainer').innerHTML=''; document.getElementById('taskObs').value=''; rowData={}; alert("Salvo!"); navigateTo('dashboard');
+        }
+        function cancelarTarefas() { if(confirm("Cancelar TUDO?")) { Object.values(rowData).forEach(d => clearInterval(d.interval)); document.getElementById('participantsContainer').innerHTML=''; rowData={}; navigateTo('dashboard'); } }
+
+        // ================= CADASTRO =================
+        
+        // CORREÇÃO DO BUG: AGORA OS CAMPOS APARECEM CORRETAMENTE
+        function toggleCreds() { 
+            const isEnc = document.getElementById('cadCargo').value === 'encarregado';
+            if(isEnc) {
+                document.getElementById('credentialsGroup').classList.remove('hidden');
+            } else {
+                document.getElementById('credentialsGroup').classList.add('hidden');
+            }
+        }
+        
+        function cadastrarFuncionario() {
+            const nome = document.getElementById('cadNome').value;
+            const c = document.getElementById('cadCargo').value; 
+            const u = document.getElementById('cadUsuario').value;
+            const s = document.getElementById('cadSenha').value;
+
+            if(!nome) return alert('❌ Digite o nome!');
+            if(c === 'encarregado' && (!u || !s)) return alert('❌ Digite o usuário e a senha para o encarregado!');
+            if (c === 'encarregado' && globalUsers.find(x => x.usuario === u)) return alert('❌ Usuário de encarregado já existe!');
+            
+            db.collection("users").add({ nome: nome, usuario: c==='encarregado'?u:'', senha: c==='encarregado'?s:'', cargo: c, avatar: c==='encarregado'?'👔':'👨' });
+            alert('✅ Salvo na nuvem!'); 
+            document.getElementById('cadNome').value=''; 
+            document.getElementById('cadUsuario').value=''; 
+            document.getElementById('cadSenha').value='';
+            loadFuncionariosCadastrados();
+        }
+        
+        function loadFuncionariosCadastrados() {
+            const list = document.getElementById('funcionariosCadastrados');
+            if(!list) return;
+            list.innerHTML = '';
+            const equipe = globalUsers.filter(u => u.cargo !== 'admin');
+            if(equipe.length === 0) { list.innerHTML = '<p style="text-align:center;">Ninguém cadastrado.</p>'; return; }
+            equipe.forEach(f => {
+                list.innerHTML += `
+                <div class="task-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${f.avatar} ${f.nome}</strong><br>
+                        <small style="color:var(--cinza-escuro);">${f.cargo === 'encarregado' ? '👔 Encarregado (Login: '+f.usuario+')' : '👷 Funcionário'}</small>
+                    </div>
+                    <button class="btn-small btn-danger" onclick="deleteUser('${f.id}')">🗑️</button>
+                </div>`;
+            });
+        }
+        
+        function deleteUser(id) { if(confirm('Excluir esta pessoa permanentemente?')) db.collection('users').doc(id).delete(); }
+
+        // ================= DASHBOARD E HISTÓRICO =================
+        function loadDashboard() {
+            const t = globalTasks.filter(x => new Date(x.inicio).toDateString() === new Date().toDateString() && (currentUser.cargo==='funcionario'?x.funcionarioId===currentUser.id:true));
+            document.getElementById('statCaixas').textContent = t.filter(x=>x.tipo==='ajuntar').reduce((s,x)=>s+x.paletes,0);
+            document.getElementById('statPaletes').textContent = t.filter(x=>x.tipo==='cortar').reduce((s,x)=>s+x.paletes,0);
+            document.getElementById('recentTasks').innerHTML = t.slice(0,5).map(x=>`
+                <div class="task-item"><div class="task-header"><span>${x.funcionarioNome}</span><span>${x.tipo==='ajuntar'?'🌽':'✂️'} ${x.paletes}p</span></div><div style="font-size:12px;">Tempo: ${Math.floor(x.duracao/60)}m</div></div>
+            `).join('');
+        }
+        
+        function loadHistorico() {
+            const sel = document.getElementById('filterFuncionario'); sel.innerHTML = '<option value="">Todos</option>';
+            globalUsers.filter(u=>u.cargo==='funcionario').forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.nome}</option>`);
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            let t = globalTasks;
+            if(currentUser.cargo==='funcionario') t = t.filter(x=>x.funcionarioId===currentUser.id);
+            else if(document.getElementById('filterFuncionario').value) t = t.filter(x=>x.funcionarioId===document.getElementById('filterFuncionario').value);
+            if(document.getElementById('filterTipo').value) t = t.filter(x=>x.tipo===document.getElementById('filterTipo').value);
+            if(document.getElementById('filterDate').value) { const d = new Date(document.getElementById('filterDate').value+'T00:00:00').toDateString(); t = t.filter(x=>new Date(x.inicio).toDateString()===d); }
+            t.sort((a,b)=>new Date(b.inicio)-new Date(a.inicio));
+            document.getElementById('historicoList').innerHTML = t.map(x=>`
+                <div class="task-item"><div class="task-header"><div><b>${x.funcionarioNome}</b> <br><small>${new Date(x.inicio).toLocaleDateString()} - ${x.tipo==='ajuntar'?'🌽 Ajuntar':'✂️ Cortar'}</small></div></div>
+                <div style="font-size:14px;">Paletes: <b>${x.paletes}</b> | Tempo: <b>${Math.floor(x.duracao/60)} min</b></div>
+                ${x.observacao ? `<div style="font-size:12px; margin-top:5px; color:#555;"><i>Obs Individual: ${x.observacao}</i></div>` : ''}
+                ${x.observacaoLote ? `<div style="font-size:12px; margin-top:2px; color:#555;"><i>Obs Lote: ${x.observacaoLote}</i></div>` : ''}
+                ${currentUser.cargo!=='funcionario'?`<button class="btn-small btn-danger" style="margin-top:10px;" onclick="db.collection('tasks').doc('${x.id}').delete()">Excluir</button>`:''}</div>
+            `).join('');
+        }
+
+        // ================= RELATÓRIO PDF E METAS =================
+        function loadRelatorioConfig() {
+            const sel = document.getElementById('relFuncSelect'); sel.innerHTML = '';
+            globalUsers.filter(u=>u.cargo==='funcionario').forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.nome}</option>`);
+        }
+
+        function gerarRelatorio() {
+            const fId = currentUser.cargo === 'funcionario' ? currentUser.id : document.getElementById('relFuncSelect').value;
+            const dIn = document.getElementById('relStart').value; const dFi = document.getElementById('relEnd').value;
+            if(!dIn || !dFi) return alert("Selecione as datas!");
+            
+            const inicio = new Date(dIn+'T00:00:00'); const fim = new Date(dFi+'T23:59:59');
+            const func = globalUsers.find(u=>u.id===fId);
+            const ts = globalTasks.filter(x => x.funcionarioId === fId && new Date(x.inicio)>=inicio && new Date(x.inicio)<=fim);
+            
+            document.getElementById('resNome').textContent = func ? func.nome : '';
+            document.getElementById('resPeriodo').textContent = `${inicio.toLocaleDateString()} a ${fim.toLocaleDateString()}`;
+            document.getElementById('printArea').classList.remove('hidden');
+
+            const tA = ts.filter(x=>x.tipo==='ajuntar'); const pA = tA.reduce((s,x)=>s+x.paletes,0); const dTotA = tA.reduce((s,x)=>s+x.duracao,0);
+            const tC = ts.filter(x=>x.tipo==='cortar'); const pC = tC.reduce((s,x)=>s+x.paletes,0); const dTotC = tC.reduce((s,x)=>s+x.duracao,0);
+
+            let mAjuntar = pA>0 ? Math.round((dTotA/pA)/60) : 0; let bA = 0; let stA = 'bonus-red'; let txA = '❌ Não bateu meta (0)';
+            if(pA>0) { if(mAjuntar<=10){ bA=150; stA='bonus-green'; txA='✅ Meta Batida (+R$ 150)'; } else if(mAjuntar<=12){ bA=75; stA='bonus-yellow'; txA='⚠️ Parcial (+R$ 75)'; } }
+
+            let mCortar = pC>0 ? Math.round((dTotC/pC)/60) : 0; let bC = 0; let stC = 'bonus-red'; let txC = '❌ Não bateu meta (0)';
+            if(pC>0) { if(mCortar<=20){ bC=150; stC='bonus-green'; txC='✅ Meta Batida (+R$ 150)'; } else if(mCortar<=24){ bC=75; stC='bonus-yellow'; txC='⚠️ Parcial (+R$ 75)'; } }
+
+            document.getElementById('resAjuntar').className = stA; document.getElementById('resAjuntar').innerHTML = `🌽 <b>Ajuntar:</b> Média de ${mAjuntar}m/palete <br><small>${txA}</small>`;
+            document.getElementById('resCortar').className = stC; document.getElementById('resCortar').innerHTML = `✂️ <b>Cortar:</b> Média de ${mCortar}m/palete <br><small>${txC}</small>`;
+            document.getElementById('resBonus').textContent = `R$ ${bA+bC},00`;
+
+            document.getElementById('resQtdAjuntar').textContent = pA; document.getElementById('resTfAjuntar').textContent = tA.length; document.getElementById('resTmpAjuntar').textContent = mAjuntar+'m';
+            document.getElementById('resQtdCortar').textContent = pC; document.getElementById('resTfCortar').textContent = tC.length; document.getElementById('resTmpCortar').textContent = mCortar+'m';
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
